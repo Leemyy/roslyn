@@ -440,6 +440,49 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests
             Assert.Equal(SyntaxKind.MemberBindingExpression, cons.Kind());
         }
 
+        private void TestConditionalAssignment(SyntaxKind kind, ParseOptions options = null)
+        {
+            var text = "a.b?.c " + SyntaxFacts.GetText(kind) + " v";
+            var expr = this.ParseExpression(text, options);
+
+            Assert.NotNull(expr);
+            var opKind = SyntaxFacts.GetAssignmentExpression(kind);
+            Assert.Equal(opKind, expr.Kind());
+            Assert.Equal(text, expr.ToString());
+            Assert.Equal(0, expr.Errors().Length);
+
+            var a = (AssignmentExpressionSyntax)expr;
+            Assert.NotEqual(default, a.OperatorToken);
+            Assert.Equal(kind, a.OperatorToken.Kind());
+            Assert.NotNull(a.Left);
+            Assert.NotNull(a.Right);
+            Assert.Equal("a.b?.c", a.Left.ToString());
+            Assert.Equal("v", a.Right.ToString());
+
+            var e = (ConditionalAccessExpressionSyntax)a.Left;
+            Assert.Equal("a.b", e.Expression.ToString());
+            var cons = e.WhenNotNull;
+            Assert.Equal(".c", cons.ToString());
+            Assert.Equal(SyntaxKind.MemberBindingExpression, cons.Kind());
+        }
+
+        [Fact]
+        public void TestConditionalAssignmentOperators()
+        {
+            TestConditionalAssignment(SyntaxKind.PlusEqualsToken);
+            TestConditionalAssignment(SyntaxKind.MinusEqualsToken);
+            TestConditionalAssignment(SyntaxKind.AsteriskEqualsToken);
+            TestConditionalAssignment(SyntaxKind.SlashEqualsToken);
+            TestConditionalAssignment(SyntaxKind.PercentEqualsToken);
+            TestConditionalAssignment(SyntaxKind.EqualsToken);
+            TestConditionalAssignment(SyntaxKind.LessThanLessThanEqualsToken);
+            TestConditionalAssignment(SyntaxKind.GreaterThanGreaterThanEqualsToken);
+            TestConditionalAssignment(SyntaxKind.AmpersandEqualsToken);
+            TestConditionalAssignment(SyntaxKind.BarEqualsToken);
+            TestConditionalAssignment(SyntaxKind.CaretEqualsToken);
+            TestConditionalAssignment(SyntaxKind.QuestionQuestionEqualsToken, options: TestOptions.Regular8);
+        }
+
         private void TestFunctionKeyword(SyntaxKind kind, SyntaxToken keyword)
         {
             Assert.NotEqual(default, keyword);
